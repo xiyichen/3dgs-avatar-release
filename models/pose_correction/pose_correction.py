@@ -203,7 +203,7 @@ class DirectPoseOptimization(PoseCorrection):
         betas = self.betas
 
         # compose rots, Jtrs, bone_transforms, posed_smpl_verts
-        rots, Jtrs, bone_transforms, posed_smpl_verts, _, _ = self.forward_smpl(betas, root_orient, pose_body, pose_hand, trans)
+        rots, Jtrs, bone_transforms, posed_smpl_verts, _, _ = self.forward_smpl(betas.reshape(-1,10), root_orient, pose_body, pose_hand, trans)
 
         rots_diff = camera.rots - rots
         updated_camera = camera.copy()
