@@ -19,7 +19,7 @@ def world_to_cam(world_coord, R, t):
     cam_coord = (R@world_coord.transpose(1, 0)).transpose(1, 0) + t.reshape(1, 3)
     return cam_coord
 
-class ZJUMoCapDataset(Dataset):
+class MonocularDataset(Dataset):
     def __init__(self, cfg, split='train'):
         super().__init__()
         self.cfg = cfg
@@ -36,7 +36,7 @@ class ZJUMoCapDataset(Dataset):
         self.val_frames = cfg.val_frames
         self.val_cams = cfg.val_views
         self.white_bg = cfg.white_background
-        self.H, self.W = 1024, 1024 # hardcoded original size
+        self.H, self.W = 711, 1265 # hardcoded original size
         self.h, self.w = cfg.img_hw
 
         self.faces = np.load('body_models/misc/faces.npz')['faces']
@@ -133,8 +133,12 @@ class ZJUMoCapDataset(Dataset):
         else:
             for cam_idx, cam_name in enumerate(cam_names):
                 cam_dir = os.path.join(subject_dir, cam_name)
-                img_files = sorted(glob.glob(os.path.join(cam_dir, '*.jpg')))[frame_slice]
-                mask_files = sorted(glob.glob(os.path.join(cam_dir, '*.png')))[frame_slice]
+                img_files = sorted(glob.glob(os.path.join(cam_dir, '*.jpg')))
+                mask_files = sorted(glob.glob(os.path.join(cam_dir, '*.png')))
+                # print(cam_idx, cam_name, cam_dir, frames, os.path.join(cam_dir, '*.jpg'), len(img_files), len(mask_files))
+                # exit()
+                # 0, train, '../neuman_preprocessed/bike/train', [0,100]
+                # 0, test, '../neuman_preprocessed/bike/test', [0,3]
 
                 for d_idx, f_idx in enumerate(frames):
                     img_file = img_files[d_idx]
@@ -284,11 +288,11 @@ class ZJUMoCapDataset(Dataset):
         mask_file = data_dict['mask_file']
         model_file = data_dict['model_file']
 
-        K = np.array(self.cameras[cam_name]['K'], dtype=np.float32).copy()
-        dist = np.array(self.cameras[cam_name]['D'], dtype=np.float32).ravel()
+        K = np.array(self.cameras[str(frame_idx)]['K'], dtype=np.float32).copy()
+        dist = np.array(self.cameras[str(frame_idx)]['D'], dtype=np.float32).ravel()
         
-        R = np.array(self.cameras[cam_name]['R'], np.float32)
-        T = np.array(self.cameras[cam_name]['T'], np.float32)
+        R = np.array(self.cameras[str(frame_idx)]['R'], np.float32)
+        T = np.array(self.cameras[str(frame_idx)]['T'], np.float32)
 
         # note that in ZJUMoCap the camera center does not align perfectly
         # here we try to offset it by modifying the extrinsic...
@@ -399,14 +403,14 @@ class ZJUMoCapDataset(Dataset):
 
         return Camera(
             frame_id=frame_idx,
-            cam_id=int(cam_name),
+            cam_id=int(cam_idx),
             K=K, R=R, T=T,
             FoVx=FovX,
             FoVy=FovY,
             image=image,
             mask=mask,
             gt_alpha_mask=None,
-            image_name=f"c{int(cam_name):02d}_f{frame_idx if frame_idx >= 0 else -frame_idx - 1:06d}",
+            image_name=f"c{cam_name}_f{frame_idx if frame_idx >= 0 else -frame_idx - 1:06d}",
             data_device=self.cfg.data_device,
             # human params
             rots=torch.from_numpy(pose_rot).float().unsqueeze(0),

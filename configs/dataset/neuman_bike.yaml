@@ -1,0 +1,35 @@
+# @package _global_
+
+dataset_name: neuman_bike
+
+dataset:
+  name: monocular
+  root_dir: "../neuman_preprocessed"
+  subject: bike
+  refine: false
+
+  train_views: [ 'train' ]
+  val_views: ['test']
+  test_views:
+    view: ${dataset.val_views}
+    video: ['2']
+    all: []
+  predict_views: ['1']
+
+  train_frames: [ 0, 93, 1 ]
+  val_frames: [ 93, 104, 1 ]
+  test_frames:
+    view: [0, 570, 30]
+    video: [0, 570, 1]
+    all: [0, 570, 1]
+  predict_frames: [0, 0, 1]
+
+  img_hw:
+    - 711
+    - 1265
+
+  lanczos: false
+  resolution: -1
+  white_background: false
+  data_device: cuda
+  eval: false
