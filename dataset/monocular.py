@@ -35,7 +35,10 @@ class MonocularDataset(Dataset):
         self.train_cams = cfg.train_views
         self.val_frames = cfg.val_frames
         self.val_cams = cfg.val_views
-        self.white_bg = cfg.white_background
+        # self.white_bg = cfg.white_background
+        self.bg = cfg.background
+        if self.split == 'val' or self.split == 'test':
+            self.bg = 'black'
         self.H, self.W = 711, 1265 # hardcoded original size
         self.h, self.w = cfg.img_hw
 
@@ -189,7 +192,8 @@ class MonocularDataset(Dataset):
             'faces': self.faces,
             'posedirs': self.posedirs,
             'J_regressor': self.J_regressor,
-            'cameras_extent': 3.469298553466797, # hardcoded, used to scale the threshold for scaling/image-space gradient
+            # 'cameras_extent': 3.469298553466797, # hardcoded, used to scale the threshold for scaling/image-space gradient
+            'cameras_extent': 4.023865701878181,
             'frame_dict': frame_dict,
         }
         self.metadata.update(cano_data)
@@ -326,7 +330,16 @@ class MonocularDataset(Dataset):
         mask = cv2.resize(mask, (self.w, self.h), interpolation=cv2.INTER_NEAREST)
 
         mask = mask != 0
-        image[~mask] = 255. if self.white_bg else 0.
+        # image[~mask] = 255. if self.white_bg else 0.
+        
+        if self.bg == 'white':
+            bg_color = np.array([1, 1, 1]) * 255
+        elif self.bg == 'black':
+            bg_color = np.array([0, 0, 0]) * 255
+        elif self.bg == 'random':
+            bg_color = (np.random.rand(3) * 255).astype(np.int32)
+        
+        image[~mask] = bg_color
         image = image / 255.
         im = image.copy()
 
@@ -416,6 +429,7 @@ class MonocularDataset(Dataset):
             rots=torch.from_numpy(pose_rot).float().unsqueeze(0),
             Jtrs=torch.from_numpy(Jtr_norm).float().unsqueeze(0),
             bone_transforms=torch.from_numpy(bone_transforms),
+            bg_color=bg_color/255.,
         )
 
     def __getitem__(self, idx):

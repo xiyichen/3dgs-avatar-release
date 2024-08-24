@@ -1,1 +1,1 @@
-python train.py dataset=neuman_bike
+python train.py mode=train dataset=neuman_bike

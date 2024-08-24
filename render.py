@@ -36,8 +36,8 @@ def predict(config):
             load_ckpt = os.path.join(scene.save_dir, "ckpt" + str(config.opt.iterations) + ".pth")
         scene.load_checkpoint(load_ckpt)
 
-        bg_color = [1, 1, 1] if config.dataset.white_background else [0, 0, 0]
-        background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+        # bg_color = [1, 1, 1] if config.dataset.white_background else [0, 0, 0]
+        # background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
         render_path = os.path.join(config.exp_dir, config.suffix, 'renders')
         makedirs(render_path, exist_ok=True)
@@ -47,6 +47,7 @@ def predict(config):
         times = []
         for idx in trange(len(scene.test_dataset), desc="Rendering progress"):
             view = scene.test_dataset[idx]
+            background = torch.tensor(view.bg_color, dtype=torch.float32, device="cuda")
             iter_start.record()
 
             render_pkg = render(view, config.opt.iterations, scene, config.pipeline, background,
@@ -82,8 +83,8 @@ def test(config):
             load_ckpt = os.path.join(scene.save_dir, "ckpt" + str(config.opt.iterations) + ".pth")
         scene.load_checkpoint(load_ckpt)
 
-        bg_color = [1, 1, 1] if config.dataset.white_background else [0, 0, 0]
-        background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+        # bg_color = [1, 1, 1] if config.dataset.white_background else [0, 0, 0]
+        # background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
         render_path = os.path.join(config.exp_dir, config.suffix, 'renders')
         makedirs(render_path, exist_ok=True)
@@ -99,6 +100,7 @@ def test(config):
         times = []
         for idx in trange(len(scene.test_dataset), desc="Rendering progress"):
             view = scene.test_dataset[idx]
+            background = torch.tensor(view.bg_color, dtype=torch.float32, device="cuda")
             iter_start.record()
 
             render_pkg = render(view, config.opt.iterations, scene, config.pipeline, background,

@@ -72,8 +72,8 @@ def training(config):
     if checkpoint:
         scene.load_checkpoint(checkpoint)
 
-    bg_color = [1, 1, 1] if dataset.white_background else [0, 0, 0]
-    background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
+    # bg_color = [1, 1, 1] if dataset.white_background else [0, 0, 0]
+    # background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
 
     iter_start = torch.cuda.Event(enable_timing = True)
     iter_end = torch.cuda.Event(enable_timing = True)
@@ -97,6 +97,8 @@ def training(config):
             data_stack = list(range(len(scene.train_dataset)))
         data_idx = data_stack.pop(randint(0, len(data_stack)-1))
         data = scene.train_dataset[data_idx]
+        
+        background = torch.tensor(data.bg_color, dtype=torch.float32, device="cuda")
 
         # Render
         if (iteration - 1) == debug_from:
@@ -222,7 +224,7 @@ def training(config):
                     size_threshold = 20 if iteration > opt.opacity_reset_interval else None
                     gaussians.densify_and_prune(opt, scene, size_threshold)
                 
-                if iteration % opt.opacity_reset_interval == 0 or (dataset.white_background and iteration == opt.densify_from_iter):
+                if iteration % opt.opacity_reset_interval == 0 or (dataset.background == 'white' and iteration == opt.densify_from_iter):
                     gaussians.reset_opacity()
 
             # Optimizer step
@@ -254,8 +256,13 @@ def validation(iteration, testing_iterations, testing_interval, scene : Scene, e
             lpips_test = 0.0
             examples = []
             for idx, data_idx in enumerate(config['cameras']):
+                # import pdb
+                # pdb.set_trace()
                 data = getattr(scene, config['name'] + '_dataset')[data_idx]
-                render_pkg = render(data, iteration, scene, *renderArgs, compute_loss=False, return_opacity=True)
+                
+                render_pkg = render(data, iteration, scene, *(renderArgs[0], data.original_image[:,0,0]), compute_loss=False, return_opacity=True)
+                
+                # print(iteration, renderArgs[-1], render_pkg["render"][:,0,0], data.original_image[:,0,0])
                 image = torch.clamp(render_pkg["render"], 0.0, 1.0)
                 gt_image = torch.clamp(data.original_image.to("cuda"), 0.0, 1.0)
                 opacity_image = torch.clamp(render_pkg["opacity_render"], 0.0, 1.0)
