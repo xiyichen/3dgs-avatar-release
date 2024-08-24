@@ -256,15 +256,15 @@ def validation(iteration, testing_iterations, testing_interval, scene : Scene, e
             lpips_test = 0.0
             examples = []
             for idx, data_idx in enumerate(config['cameras']):
-                # import pdb
-                # pdb.set_trace()
                 data = getattr(scene, config['name'] + '_dataset')[data_idx]
+                gt_mask = data.original_mask.to("cuda")
                 
-                render_pkg = render(data, iteration, scene, *(renderArgs[0], data.original_image[:,0,0]), compute_loss=False, return_opacity=True)
-                
+                render_pkg = render(data, iteration, scene, *(renderArgs[0], data.original_image[:,0,0]*0), compute_loss=False, return_opacity=True)
+                gt_image = data.original_image.to("cuda")
+                gt_image[gt_mask.repeat(3, 1, 1)==0] = 0
                 # print(iteration, renderArgs[-1], render_pkg["render"][:,0,0], data.original_image[:,0,0])
                 image = torch.clamp(render_pkg["render"], 0.0, 1.0)
-                gt_image = torch.clamp(data.original_image.to("cuda"), 0.0, 1.0)
+                gt_image = torch.clamp(gt_image, 0.0, 1.0)
                 opacity_image = torch.clamp(render_pkg["opacity_render"], 0.0, 1.0)
 
 
