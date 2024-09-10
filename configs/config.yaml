@@ -70,7 +70,7 @@ opt:
   lambda_dssim: 0.
   lambda_perceptual: 1e-2
   mask_loss_type: l1
-#  lambda_mask: [0.1,5000,0]
+  # lambda_mask: [0.1,5000,0]
   lambda_mask: 0.1
   lambda_opacity: 0.
   lambda_skinning: [10,1000,0.1]

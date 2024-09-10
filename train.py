@@ -107,9 +107,12 @@ def training(config):
         lambda_mask = C(iteration, config.opt.lambda_mask)
         use_mask = lambda_mask > 0.
         render_pkg = render(data, iteration, scene, pipe, background, compute_loss=True, return_opacity=use_mask)
-
         image, viewspace_point_tensor, visibility_filter, radii = render_pkg["render"], render_pkg["viewspace_points"], render_pkg["visibility_filter"], render_pkg["radii"]
         opacity = render_pkg["opacity_render"] if use_mask else None
+        
+        
+        # import pdb
+        # pdb.set_trace()
 
         # Loss
         gt_image = data.original_image.cuda()
@@ -259,9 +262,9 @@ def validation(iteration, testing_iterations, testing_interval, scene : Scene, e
                 data = getattr(scene, config['name'] + '_dataset')[data_idx]
                 gt_mask = data.original_mask.to("cuda")
                 
-                render_pkg = render(data, iteration, scene, *(renderArgs[0], data.original_image[:,0,0]*0), compute_loss=False, return_opacity=True)
+                render_pkg = render(data, iteration, scene, *(renderArgs[0], torch.ones_like(data.original_image[:,0,0])), compute_loss=False, return_opacity=True)
                 gt_image = data.original_image.to("cuda")
-                gt_image[gt_mask.repeat(3, 1, 1)==0] = 0
+                gt_image[gt_mask.repeat(3, 1, 1)==0] = 1
                 # print(iteration, renderArgs[-1], render_pkg["render"][:,0,0], data.original_image[:,0,0])
                 image = torch.clamp(render_pkg["render"], 0.0, 1.0)
                 gt_image = torch.clamp(gt_image, 0.0, 1.0)
